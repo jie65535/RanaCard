@@ -548,7 +548,7 @@
     "Combo": "Animals",
     "Name": "点金藤任务",
     "Level": 1,
-    "EffectDescription": "累积获得900个衍生物时：获得|点金藤|,销毁自身[已获得1{SpecialVal}个]",
+    "EffectDescription": "累积获得900个衍生物时：获得|点金藤|,销毁自身[还剩1{SpecialVal:900}个]",
     "EffectString": "Watch(BagIn,Category:Derivative)  <{SelfPendant,SpecialVal,BiggerOrEqual,900}[BagIn(点金藤;1)][DestroyPendant()]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
@@ -1161,7 +1161,7 @@
     "Name": "鸡蛋保温箱",
     "Level": 2,
     "EffectDescription": "|鸡蛋|变为母鸡的概率+10%",
-    "EffectString": "Gain <[Filter(CardCollection'(Name'Contain'鸡蛋 & Category'Is'Derivative)),EffectPar2,10][Filter(CardCollection'(Name'Contain'鸡蛋 & Category'Is'Derivative)),EffectPar4,-10]>",
+    "EffectString": "Gain <[Filter(CardCollection'(Name'Contain'鸡蛋 & Category'Is'Derivative)),EffectPar2,10][Filter(CardCollection'(Name'Contain'鸡蛋 & Category'Is'Derivative)),EffectPar3,-10]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
     "Introduction": "0"
@@ -2121,7 +2121,7 @@
     "Name": "嘣嘣草增益",
     "Level": 2,
     "EffectDescription": "|嘣嘣草|提升收成收益需要的时间爆炸次数-1",
-    "EffectString": "Gain <[Filter(CardCollection'(Name'Is'嘣嘣草)),SpecialVal,-1][Filter(CardCollection'(Name'Is'嘣嘣草 & SpecialVal'Equal'0)),HarvestIncome,1][Filter(CardCollection'(Name'Is'嘣嘣草 & SpecialVal'Equal'0)),SpecialVal,=4][Filter(CardCollection'(Name'Is'嘣嘣草)),EffectPar4,-1]>",
+    "EffectString": "Gain <[Filter(CardCollection'(Name'Is'嘣嘣草)),SpecialVal,-1][Filter(CardCollection'(Name'Is'嘣嘣草 & SpecialVal'Equal'0)),HarvestIncome,1][Filter(CardCollection'(Name'Is'嘣嘣草 & SpecialVal'Equal'0)),SpecialVal,=3][Filter(CardCollection'(Name'Is'嘣嘣草)),EffectPar4,-1]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
     "Introduction": "0"
@@ -2133,7 +2133,7 @@
     "Name": "嘣嘣草之家",
     "Level": 2,
     "EffectDescription": "时间爆炸：使地里的|嘣嘣草|生长值+2",
-    "EffectString": "TimeExplode <[Filter(Land'(Name'Is'嘣嘣草)),Growth,2)]>",
+    "EffectString": "TimeExplode <[Filter(Land'(Name'Is'嘣嘣草)),Growth,2]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
     "Introduction": "0"
