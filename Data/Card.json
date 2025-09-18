@@ -7076,10 +7076,10 @@
     {
       "Name": "鸡精",
       "ID": "Chicken-15",
-      "Category": "Spell",
+      "Category": "Derivative",
       "_timeLabel": 0,
       "Level": 1,
-      "Type": "Normal",
+      "Type": "Derivative",
       "Combo": "Chicken",
       "Character": "Animal",
       "_thorns": 0,

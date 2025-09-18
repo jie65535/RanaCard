@@ -1703,7 +1703,7 @@
     "EffectDescription": "|雨露茄|对雨露字样的植物提供的<sprite=1>加成额外+1<sprite=1>",
     "EffectString": "Gain <[Filter(CardCollection'(Name'Is'雨露茄)),EffectPar1,1]>",
     "SpecialVal": 0,
-    "CanGainByPack": 0,
+    "CanGainByPack": 1,
     "Introduction": "0"
   },
   {
