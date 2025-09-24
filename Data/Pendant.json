@@ -1377,7 +1377,7 @@
     "Name": "赌石",
     "Level": 3,
     "EffectDescription": "所有矿石打出时有40%概率获得两倍收益,有10%概率无收益",
-    "EffectString": "Gain <[Filter(CardCollection'(Type'Is'Mineral)),EffectString,=\"Play <[Probability(40%Global,Money,Operation(GetDataInt(SelfCard:SpecialVal)*2)%50%Global,Money,GetDataInt(SelfCard:SpecialVal)%)]>(Consume)\"]>",
+    "EffectString": "Gain <[Filter(CardCollection'(Type'Is'Mineral)),EffectString,\"=Play <[Probability(40%Global,Money,Operation(GetDataInt(SelfCard:SpecialVal)*2)%50%Global,Money,GetDataInt(SelfCard:SpecialVal)%)]>(Consume)\"]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
     "Introduction": "0"
@@ -2229,7 +2229,7 @@
     "Name": "寿桃",
     "Level": 2,
     "EffectDescription": "本回合中,每触发6时间值,全局生长+1[还剩1{SpecialVal:6}时间值]",
-    "EffectString": "Watch(GlobalNum,ThisRoundActivatedTimeLabelPlus) <{SelfPendant,SpecialVal,BiggerOrEqual,6}[AllGrow(Operation(GetDataInt(SelfPendant:SpecialVal)/6))][SelfPendant,SpecialVal,=Operation(GetDataInt(SelfPendant:SpecialVal)%6)]> # RoundBegin <[SelfPendant,SpecialVal,=0]>",
+    "EffectString": "Watch(GlobalNum,ThisRoundActivatedTimeLabelPlus) <{SelfPendant,SpecialVal,BiggerOrEqual,6}[AllGrow(Operation(GetDataInt(SelfPendant:SpecialVal)/6)))][SelfPendant,SpecialVal,=Operation(GetDataInt(SelfPendant:SpecialVal)%6)]> # RoundBegin <[SelfPendant,SpecialVal,=0]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
     "Introduction": "0"
