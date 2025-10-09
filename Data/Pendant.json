@@ -1893,7 +1893,7 @@
     "Name": "点金术",
     "Level": 3,
     "EffectDescription": "本回合每打出3张法术牌：+1<sprite=1>[还剩1{SpecialVal:3}张]",
-    "EffectString": "Watch(Condition,Category;Is;Spell) <{SelfPendant,SpecialVal,BiggerOrEqual,3}[Global,Money,1][SelfPendant,SpecialVal,-3]>",
+    "EffectString": "Watch(Condition,Category;Is;Spell) <{SelfPendant,SpecialVal,BiggerOrEqual,3}[Global,Money,1][SelfPendant,SpecialVal,-3]> # RoundEnd <[SelfPendant,SpecialVal,=0]>",
     "SpecialVal": 0,
     "CanGainByPack": 1,
     "Introduction": "0"
@@ -2325,7 +2325,7 @@
     "Name": "荆棘法杖",
     "Level": 5,
     "EffectDescription": "所有植物的生长周期+1；秋季,卡牌打出效果额外生效1次",
-    "EffectString": "RoundBegin <[SelfPendant,CountVal,1]><{SelfPendant,CountVal,Equal,3}[Global,PlayTimes,1][SelfPendant,SpecialVal,=1]><{SelfPendant,CountVal,Equal,4}[Global,PlayTimes,-1][SelfPendant,SpecialVal,=0]> # YearEnd <{SelfPendant,SpecialVal,Equal,1}[Global,PlayTimes,-1][SelfPendant,SpecialVal,=0][SelfPendant,CountVal,=0]>  # Gain <[Filter(CardCollection'(Type'Is'Plant)),GrowPeriod,1]>",
+    "EffectString": "RoundBegin <[SelfPendant,CountVal,1]><{SelfPendant,CountVal,Equal,3}[Global,PlayTimes,1][SelfPendant,SpecialVal,=1]><{SelfPendant,CountVal,Equal,4}[Global,PlayTimes,-1][SelfPendant,SpecialVal,=0][SelfPendant,CountVal,=0]> # YearEnd <{SelfPendant,SpecialVal,Equal,1}[Global,PlayTimes,-1][SelfPendant,SpecialVal,=0][SelfPendant,CountVal,=0]>  # Gain <[Filter(CardCollection'(Type'Is'Plant)),GrowPeriod,1]>",
     "SpecialVal": 0,
     "CanGainByPack": 0,
     "Introduction": "0"
