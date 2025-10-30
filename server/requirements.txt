@@ -3,3 +3,4 @@ uvicorn[standard]
 pydantic
 cryptography
 gunicorn
+python-multipart
