@@ -1,0 +1,17 @@
+/* Global theme variables used across the app */
+:root {
+  --code-bg: #f6f8fa;
+  --code-fg: #1f2328;
+  --code-border: #e1e4e8;
+}
+
+html.dark {
+  --code-bg: #2a2a2a;
+  --code-fg: #e8eaed;
+  --code-border: #3a3a3a;
+}
+
+/* Optional: unify pre/code default look a bit */
+pre, code, kbd, samp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}

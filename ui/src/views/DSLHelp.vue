@@ -181,7 +181,21 @@
 
 <style scoped>
 .dsl-help { max-width: 1080px; margin: 0 auto; }
-.dsl-help :deep(code) { background: #f6f8fa; padding: 0 4px; border-radius: 3px; }
+.dsl-help :deep(code) {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  padding: 0 4px;
+  border-radius: 3px;
+  border: 1px solid var(--code-border);
+}
+.dsl-help :deep(pre) { background: transparent; }
+.dsl-help :deep(code) { white-space: break-spaces; }
+.dsl-help :deep(.el-card__body) { overflow-x: auto; }
+.dsl-help :deep(.el-card) { border-radius: 8px; }
+.dsl-help :deep(h2), .dsl-help :deep(h3) { margin-top: 12px; }
+.dsl-help :deep(ul) { padding-left: 18px; }
+.dsl-help :deep(li) { margin: 4px 0; }
+.dsl-help :deep(.el-option) { font-size: 13px; }
+.dsl-help :deep(.ex code) { display: inline-block; margin-top: 4px; }
 .ex { margin: 8px 0 16px; }
 </style>
-
