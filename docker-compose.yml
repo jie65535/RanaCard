@@ -10,6 +10,8 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./Data:/app/Data:ro
+      # Persist user shares across container restarts
+      - ./server/uploads:/app/server/uploads
     expose:
       - "8000"
 

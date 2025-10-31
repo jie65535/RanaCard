@@ -24,6 +24,21 @@
 2. 后端容器名：`zgdg-backend`，前端容器名：`zgdg-web`
 3. `./Data` 会只读挂载到后端容器 `/app/Data`
 
+### 持久化用户分享
+
+为避免容器重建后分享数据丢失，`docker-compose.yml` 已将宿主机目录 `./server/uploads` 挂载到容器路径 `/app/server/uploads`。该目录下的 `share/*.json` 与 `index.json` 会跨重启保留。
+
+如使用命名卷替代本地目录，示例：
+
+```
+volumes:
+  - share_uploads:/app/server/uploads
+
+...
+volumes:
+  share_uploads:
+```
+
 ## 分享改动（极简）
 
 接口（无账号、无审核）：

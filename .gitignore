@@ -25,6 +25,7 @@ build/
 venv/
 env/
 server/.venv/
+server/uploads/
 
 # IDE / Editor
 .idea/
@@ -34,4 +35,3 @@ server/.venv/
 # Env files
 .env
 .env.*
-
