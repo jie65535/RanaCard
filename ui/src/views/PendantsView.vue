@@ -80,7 +80,7 @@
           <el-input v-model="shareTitle" placeholder="例如：更强的初始挂件" />
         </el-form-item>
         <el-form-item label="作者">
-          <el-input v-model="shareAuthor" placeholder="你的名字（可选）" />
+          <el-input v-model="shareAuthor" placeholder="你的名字" />
         </el-form-item>
         <el-form-item label="说明">
           <el-input v-model="shareDescription" type="textarea" :rows="6" placeholder="详细描述你的改动、思路与使用建议（支持多行）" />
@@ -88,7 +88,7 @@
       </el-form>
       <template #footer>
         <el-button @click="shareVisible=false">取消</el-button>
-        <el-button type="primary" :disabled="!shareTitle.trim()" @click="doShare">发布</el-button>
+        <el-button type="primary" :disabled="!shareTitle.trim() || !shareAuthor.trim() || !shareDescription.trim()" @click="doShare">发布</el-button>
       </template>
     </el-dialog>
   </div>

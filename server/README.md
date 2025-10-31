@@ -29,7 +29,7 @@
 接口（无账号、无审核）：
 
 - `POST /api/share`
-  - Body: `{ meta: { title, author?, description?, baseDataVersion? }, data: { cards?, pendants?, mapEvents?, beginEffects? } }`
+  - Body: `{ meta: { title, author, description, baseDataVersion? }, data: { cards?, pendants?, mapEvents?, beginEffects? } }`
   - 服务端对包含的部分逐项复用 `/api/validate` 校验，保存为 `server/uploads/share/{id}.json`
   - 返回：`{ id, url, manageToken }`
 - `GET /api/share?q=关键词&limit=30` 列表最近分享（不含敏感字段）

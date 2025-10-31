@@ -4,7 +4,7 @@ import hashlib
 import json
 import secrets
 import time
-from dataclasses import dataclass
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -20,6 +20,7 @@ router = APIRouter(prefix="/api/share", tags=["share"])
 ROOT = Path(__file__).resolve().parents[2]
 STORE_DIR = ROOT / "server" / "uploads" / "share"
 INDEX_PATH = STORE_DIR / "index.json"
+ID_RE = re.compile(r"^[A-Za-z0-9\-]{6,24}$")
 
 
 def _now_iso() -> str:
@@ -58,6 +59,11 @@ def _hash_token(tok: str) -> str:
     return hashlib.sha256(tok.encode("utf-8")).hexdigest()
 
 
+def _ensure_valid_id(share_id: str) -> None:
+    if not isinstance(share_id, str) or not ID_RE.match(share_id):
+        raise HTTPException(status_code=400, detail="无效的分享ID")
+
+
 # ---- API ----
 
 
@@ -91,12 +97,23 @@ async def create_share(request: Request) -> Dict[str, Any]:
 
     if not isinstance(title, str) or not title.strip():
         raise HTTPException(status_code=400, detail="meta.title 必填")
-    if author is not None and not isinstance(author, str):
-        raise HTTPException(status_code=400, detail="meta.author 必须为字符串")
-    if description is not None and not isinstance(description, str):
-        raise HTTPException(status_code=400, detail="meta.description 必须为字符串")
+    if not isinstance(author, str) or not author.strip():
+        raise HTTPException(status_code=400, detail="meta.author 必填")
+    if not isinstance(description, str) or not description.strip():
+        raise HTTPException(status_code=400, detail="meta.description 必填")
     if base_ver is not None and not isinstance(base_ver, str):
         raise HTTPException(status_code=400, detail="meta.baseDataVersion 必须为字符串")
+
+    # length limits
+    title_s = title.strip()
+    author_s = author.strip()
+    description_s = description.strip()
+    if len(title_s) > 100:
+        raise HTTPException(status_code=400, detail="title 过长（最多 100 字符）")
+    if len(author_s) > 50:
+        raise HTTPException(status_code=400, detail="author 过长（最多 50 字符）")
+    if len(description_s) > 3000:
+        raise HTTPException(status_code=400, detail="description 过长（最多 3000 字符）")
 
     has_any = False
     # Validate supported kinds using existing validators
@@ -135,10 +152,10 @@ async def create_share(request: Request) -> Dict[str, Any]:
     # Normalize write object
     pkg_obj = {
         "meta": {
-            "title": title.strip(),
-            "author": author or "",
-            "description": description or "",
-            "baseDataVersion": base_ver or "",
+            "title": title_s,
+            "author": author_s,
+            "description": description_s,
+            "baseDataVersion": (base_ver or "").strip() if isinstance(base_ver, str) else "",
             "createdAt": created_at,
         },
         "data": {k: v for k, v in data.items() if k in ("cards", "pendants", "mapEvents", "beginEffects") and v is not None},
@@ -224,6 +241,7 @@ def list_shares(q: Optional[str] = Query(None), limit: int = Query(30, ge=1, le=
 
 @router.get("/{share_id}")
 def get_share(share_id: str) -> JSONResponse:
+    _ensure_valid_id(share_id)
     fpath = STORE_DIR / f"{share_id}.json"
     if not fpath.exists():
         raise HTTPException(status_code=404, detail="未找到分享")
@@ -251,6 +269,7 @@ def get_share(share_id: str) -> JSONResponse:
 
 @router.delete("/{share_id}")
 def delete_share(share_id: str, manageToken: Optional[str] = Query(None)) -> Dict[str, Any]:
+    _ensure_valid_id(share_id)
     token = manageToken
     if not token:
         raise HTTPException(status_code=400, detail="缺少 manageToken")
