@@ -5,7 +5,7 @@ import axios from 'axios'
 const rawBase = (import.meta as any).env?.VITE_API_BASE as string | undefined
 const API_BASE = rawBase && rawBase.trim() !== '' ? rawBase.replace(/\/+$/, '') : ''
 
-export async function getData(kind: 'card' | 'pendant') {
+export async function getData(kind: 'card' | 'pendant' | 'mapevent') {
   // Prefer new /data route; fallback to /baseline for compatibility
   try {
     const { data } = await axios.get(`${API_BASE}/api/data/${kind}`)
@@ -16,7 +16,7 @@ export async function getData(kind: 'card' | 'pendant') {
   }
 }
 
-export async function validate(kind: 'card' | 'pendant', payload: any): Promise<{ ok: boolean; errors: string[] }> {
+export async function validate(kind: 'card' | 'pendant' | 'mapevent', payload: any): Promise<{ ok: boolean; errors: string[] }> {
   const { data } = await axios.post(`${API_BASE}/api/validate`, payload, { params: { kind } })
   return data
 }

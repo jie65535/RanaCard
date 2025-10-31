@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Response
 from pydantic import BaseModel, Field
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "Data"
 
 
-def _load_json(path: Path) -> Dict[str, Any]:
+def _load_json(path: Path) -> Union[Dict[str, Any], List[Any]]:
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Not found: {path.name}")
     with path.open("rb") as f:
@@ -28,11 +28,13 @@ def get_baseline(kind: str) -> Dict[str, Any]:
         return _load_json(DATA_DIR / "Card.json")
     if kind_l == "pendant":
         return _load_json(DATA_DIR / "Pendant.json")
-    raise HTTPException(status_code=400, detail="kind must be 'card' or 'pendant'")
+    if kind_l == "mapevent":
+        return _load_json(DATA_DIR / "MapEvent.json")
+    raise HTTPException(status_code=400, detail="kind must be 'card' or 'pendant' or 'mapevent'")
 
 
 @router.get("/data/{kind}")
-def get_data(kind: str) -> Dict[str, Any]:
+def get_data(kind: str) -> Union[Dict[str, Any], List[Any]]:
     return get_baseline(kind)
 
 
@@ -99,8 +101,51 @@ def validate_payload(kind: str, payload: Dict[str, Any]) -> ValidateResult:
                 level = p.get("Level")
                 if level is not None and not isinstance(level, int):
                     errors.append(f"Pendant[{i}].Level must be int")
+    elif kind_l == "mapevent":
+        items = payload if isinstance(payload, list) else None
+        if items is None:
+            errors.append("payload must be an array of events")
+        else:
+            ids = set()
+            for i, ev in enumerate(items):
+                if not isinstance(ev, dict):
+                    errors.append(f"[{i}] must be object")
+                    continue
+                eid = ev.get("ID")
+                if not isinstance(eid, str) or not eid:
+                    errors.append(f"[{i}].ID required")
+                elif eid in ids:
+                    errors.append(f"Duplicate ID: {eid}")
+                else:
+                    ids.add(eid)
+                name = ev.get("Name")
+                if name is not None and not isinstance(name, str):
+                    errors.append(f"[{i}].Name must be string")
+                limit = ev.get("LimitStage")
+                if limit is not None and not isinstance(limit, int):
+                    errors.append(f"[{i}].LimitStage must be int")
+                character = ev.get("Character")
+                if character is not None and not isinstance(character, str):
+                    errors.append(f"[{i}].Character must be string")
+                content = ev.get("Content")
+                if content is not None and not isinstance(content, str):
+                    errors.append(f"[{i}].Content must be string")
+                choices = ev.get("Choices")
+                if choices is not None and not isinstance(choices, list):
+                    errors.append(f"[{i}].Choices must be list")
+                elif isinstance(choices, list):
+                    for j, ch in enumerate(choices):
+                        if not isinstance(ch, dict):
+                            errors.append(f"[{i}].Choices[{j}] must be object")
+                            continue
+                        desc = ch.get("Description")
+                        eff = ch.get("Effect")
+                        if desc is not None and not isinstance(desc, str):
+                            errors.append(f"[{i}].Choices[{j}].Description must be string")
+                        if eff is not None and not isinstance(eff, str):
+                            errors.append(f"[{i}].Choices[{j}].Effect must be string")
     else:
-        errors.append("kind must be 'card' or 'pendant'")
+        errors.append("kind must be 'card' or 'pendant' or 'mapevent'")
 
     return ValidateResult(ok=len(errors) == 0, errors=errors)
 
