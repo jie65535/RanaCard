@@ -221,7 +221,7 @@ async function doShare() {
     shareVisible.value = false
     const full = (import.meta as any).env?.VITE_API_BASE ? `${(import.meta as any).env.VITE_API_BASE.replace(/\/+$/, '')}${url}` : url
     alert('发布成功！\n分享链接：' + full)
-    router.push('/share')
+    router.push(`/share?id=${id}`)
   } catch (e: any) {
     alert('发布失败：' + (e?.message || '未知错误'))
   }

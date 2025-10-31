@@ -2,14 +2,22 @@
   <div class="page">
     <div class="toolbar">
       <el-input v-model="q" placeholder="搜索标题" style="max-width: 320px" />
+      <el-select v-model="sortKey" style="width: 140px" placeholder="排序字段">
+        <el-option label="按时间" value="time" />
+        <el-option label="按下载" value="downloads" />
+      </el-select>
+      <el-select v-model="sortOrder" style="width: 120px" placeholder="顺序">
+        <el-option label="降序" value="desc" />
+        <el-option label="升序" value="asc" />
+      </el-select>
       <el-button type="primary" @click="load">刷新</el-button>
     </div>
 
     <el-empty v-if="items.length === 0" description="暂无分享" />
 
     <el-row v-else :gutter="12">
-      <el-col v-for="it in items" :key="it.id" :xs="24" :sm="12" :md="8" :lg="6">
-        <el-card class="item" @click="openDetail(it)" shadow="hover">
+      <el-col v-for="it in sortedItems" :key="it.id" :xs="24" :sm="12" :md="8" :lg="6">
+        <el-card :class="['item', { highlight: it.id===highlightId }]" @click="openDetail(it)" shadow="hover">
           <div class="title">{{ it.title }}</div>
           <div class="meta">
             <span>作者：{{ it.author || '佚名' }}</span>
@@ -70,6 +78,19 @@ const q = ref('')
 const items = ref<Array<{ id: string; title: string; author?: string; createdAt: string; size: number; downloads: number; description?: string }>>([])
 const width = ref<number>(typeof window !== 'undefined' ? window.innerWidth : 1200)
 const drawerSize = computed(() => width.value < 900 ? '100%' : '520px')
+const sortKey = ref<'time'|'downloads'>('time')
+const sortOrder = ref<'asc'|'desc'>('desc')
+const sortedItems = computed(() => {
+  const list = items.value.slice()
+  list.sort((a,b) => {
+    let av = sortKey.value==='downloads' ? a.downloads : new Date(a.createdAt).getTime()
+    let bv = sortKey.value==='downloads' ? b.downloads : new Date(b.createdAt).getTime()
+    if (isNaN(Number(av))) av = 0; if (isNaN(Number(bv))) bv = 0
+    return sortOrder.value==='asc' ? (av as number) - (bv as number) : (bv as number) - (av as number)
+  })
+  return list
+})
+const highlightId = ref<string>('')
 
 async function load() {
   const { items: list } = await shareList(q.value || undefined, 30)
@@ -195,13 +216,20 @@ function copyLink(id: string) {
   ElMessage.success('已复制分享链接')
 }
 
-onMounted(() => {
-  load()
-  // Deep-link import: #/share?id=xxxxx
+onMounted(async () => {
+  // Deep-link focus: #/share?id=xxxxx -> 仅打开详情并高亮，不自动导入
   const hash = typeof window !== 'undefined' ? window.location.hash : ''
   const qstr = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : ''
-  const id = new URLSearchParams(qstr).get('id')
-  if (id) onImport(id)
+  const focusId = new URLSearchParams(qstr).get('id') || ''
+  await load()
+  if (focusId) {
+    const it = items.value.find(i => i.id === focusId)
+    if (it) {
+      highlightId.value = focusId
+      openDetail(it)
+      setTimeout(() => { highlightId.value = '' }, 3000)
+    }
+  }
   if (typeof window !== 'undefined') window.addEventListener('resize', () => { width.value = window.innerWidth })
 })
 
@@ -222,4 +250,5 @@ function openDetail(it: any) {
 .actions { display: flex; gap: 8px; }
 .desc { font-size: 13px; margin: 6px 0; line-height: 1.5; max-height: 3.1em; overflow: hidden; }
 .detail-desc { white-space: pre-wrap; line-height: 1.6; }
+.item.highlight { outline: 2px solid var(--el-color-primary); }
 </style>

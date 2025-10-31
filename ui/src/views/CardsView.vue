@@ -222,7 +222,7 @@ async function doShare() {
     shareVisible.value = false
     const full = (import.meta as any).env?.VITE_API_BASE ? `${(import.meta as any).env.VITE_API_BASE.replace(/\/+$/, '')}${url}` : url
     alert('发布成功！\n分享链接：' + full + '\n\n提示：管理令牌已保存在本地，可在“社区分享”页面删除该条目。')
-    router.push('/share')
+    router.push(`/share?id=${id}`)
   } catch (e: any) {
     alert('发布失败：' + (e?.message || '未知错误'))
   }
