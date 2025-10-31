@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDataStore } from '../store/data'
 import { getData, validate, decodeEncrypted, encodeEncrypted, shareCreate } from '../api'
 
@@ -135,6 +136,7 @@ const shareVisible = ref(false)
 const shareTitle = ref('')
 const shareAuthor = ref(localStorage.getItem('share.author') || '')
 const shareDescription = ref('')
+const router = useRouter()
 
 const characterOptions = computed(() => {
   if (!mapEvents.value) return [] as string[]
@@ -219,6 +221,7 @@ async function doShare() {
     shareVisible.value = false
     const full = (import.meta as any).env?.VITE_API_BASE ? `${(import.meta as any).env.VITE_API_BASE.replace(/\/+$/, '')}${url}` : url
     alert('发布成功！\n分享链接：' + full)
+    router.push('/share')
   } catch (e: any) {
     alert('发布失败：' + (e?.message || '未知错误'))
   }

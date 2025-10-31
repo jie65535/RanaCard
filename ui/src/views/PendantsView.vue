@@ -96,6 +96,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDataStore } from '../store/data'
 import { getData, validate, decodeEncrypted, encodeEncrypted, shareCreate } from '../api'
 
@@ -117,6 +118,7 @@ const shareVisible = ref(false)
 const shareTitle = ref('')
 const shareAuthor = ref(localStorage.getItem('share.author') || '')
 const shareDescription = ref('')
+const router = useRouter()
 
 // 仅显示存在差异的字段
 const pendantEditableOrder = [
@@ -215,6 +217,7 @@ async function doShare() {
     shareVisible.value = false
     const full = (import.meta as any).env?.VITE_API_BASE ? `${(import.meta as any).env.VITE_API_BASE.replace(/\/+$/, '')}${url}` : url
     alert('发布成功！\n分享链接：' + full + '\n\n提示：管理令牌已保存在本地，可在“社区分享”页面删除该条目。')
+    router.push('/share')
   } catch (e: any) {
     alert('发布失败：' + (e?.message || '未知错误'))
   }

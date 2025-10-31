@@ -13,7 +13,7 @@
           <div class="title">{{ it.title }}</div>
           <div class="meta">
             <span>作者：{{ it.author || '佚名' }}</span>
-            <span>时间：{{ it.createdAt }}</span>
+            <span>时间：{{ localTime(it.createdAt) }}</span>
           </div>
           <div class="desc">{{ (it.description || '').slice(0, 80) }}<span v-if="(it.description||'').length>80">...</span></div>
           <div class="meta">
@@ -45,7 +45,7 @@
     <template v-if="detail">
       <div class="meta">
         <span>作者：{{ detail.author || '佚名' }}</span>
-        <span>时间：{{ detail.createdAt }}</span>
+        <span>时间：{{ localTime(detail.createdAt) }}</span>
         <span>下载：{{ detail.downloads }}</span>
         <span>大小：{{ prettySize(detail.size) }}</span>
       </div>
@@ -80,6 +80,17 @@ function prettySize(n: number) {
   if (n < 1024) return `${n}B`
   if (n < 1024*1024) return `${(n/1024).toFixed(1)}KB`
   return `${(n/1024/1024).toFixed(1)}MB`
+}
+
+function localTime(iso: string) {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  const y = d.getFullYear()
+  const m = String(d.getMonth()+1).padStart(2,'0')
+  const day = String(d.getDate()).padStart(2,'0')
+  const hh = String(d.getHours()).padStart(2,'0')
+  const mm = String(d.getMinutes()).padStart(2,'0')
+  return `${y}-${m}-${day} ${hh}:${mm}`
 }
 
 function tokenMap(): Record<string,string> {
