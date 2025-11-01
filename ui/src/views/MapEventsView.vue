@@ -16,9 +16,7 @@
       <el-button :disabled="!mapEvents" @click="exportEncrypted">导出 MapEvent.json</el-button>
       <el-button :disabled="!mapEvents" @click="openShare">分享改动</el-button>
       <el-input v-model="keyword" placeholder="搜索 ID/名称/内容/选项" style="max-width: 320px" />
-      <el-select v-model="selectedCharacter" clearable placeholder="角色" style="width: 140px">
-        <el-option v-for="c in characterOptions" :key="c" :label="c" :value="c" />
-      </el-select>
+      <CharacterSelect v-model="selectedCharacter as any" clearable placeholder="角色" style="width: 140px" />
       <el-input-number v-model="minStage" :min="-1" :max="999" placeholder="阶段≥" :step="1" style="width: 140px" />
       <el-input-number v-model="maxStage" :min="-1" :max="999" placeholder="阶段≤" :step="1" style="width: 140px" />
     </div>
@@ -30,7 +28,11 @@
         <el-table-column prop="ID" label="ID" width="200" sortable />
         <el-table-column prop="Name" label="名称" sortable />
         <el-table-column prop="LimitStage" label="阶段限制" width="120" sortable />
-        <el-table-column prop="Character" label="角色" width="120" sortable />
+        <el-table-column prop="Character" label="角色" width="120" sortable>
+          <template #="{row}">
+            <CharacterTag :value="row.Character" />
+          </template>
+        </el-table-column>
         <el-table-column label="内容" min-width="240" show-overflow-tooltip>
           <template #default="{ row }">{{ row.Content }}</template>
         </el-table-column>
@@ -56,7 +58,10 @@
           <el-form-item label="ID"><el-input v-model="editBuffer.ID" /></el-form-item>
           <el-form-item label="名称"><el-input v-model="editBuffer.Name" /></el-form-item>
           <el-form-item label="阶段限制"><el-input-number v-model="editBuffer.LimitStage" :min="-1" :step="1" /></el-form-item>
-          <el-form-item label="角色"><el-input v-model="editBuffer.Character" /></el-form-item>
+          <!-- <el-form-item label="角色"><el-input v-model="editBuffer.Character" /></el-form-item> -->
+          <el-form-item label="角色">
+            <CharacterSelect v-model="editBuffer.Character" />
+          </el-form-item>
           <el-form-item label="内容"><el-input v-model="editBuffer.Content" type="textarea" :rows="4" /></el-form-item>
 
           <div class="editor-head">选项</div>
@@ -116,6 +121,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '../store/data'
 import { getData, validate, decodeEncrypted, encodeEncrypted, shareCreate } from '../api'
+import CharacterSelect from '../components/edit/CharacterSelect.vue'
+import CharacterTag from '../components/tag/CharacterTag.vue'
 
 const store = useDataStore()
 const mapEvents = computed(() => store.mapEvents)

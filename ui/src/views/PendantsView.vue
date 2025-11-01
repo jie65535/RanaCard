@@ -17,12 +17,8 @@
       
       <el-button :disabled="!pendants" @click="openShare">分享改动</el-button>
       <el-input v-model="keyword" placeholder="搜索 ID/名称/效果" style="max-width: 320px" />
-      <el-select v-model="selectedCharacter" clearable placeholder="角色" style="width: 140px">
-        <el-option v-for="c in characterOptions" :key="c" :label="c" :value="c" />
-      </el-select>
-      <el-select v-model="selectedCombo" clearable placeholder="流派" style="width: 140px">
-        <el-option v-for="t in comboOptions" :key="t" :label="t" :value="t" />
-      </el-select>
+      <CharacterSelect v-model="selectedCharacter as any" clearable placeholder="角色" style="width: 140px" />
+      <ComboSelect v-model="selectedCombo as any" clearable placeholder="流派" style="width: 140px" />
     </div>
 
     <div v-if="!pendants" class="empty">请先加载游戏数据或导入加密文件</div>
@@ -31,8 +27,16 @@
       <el-table height="calc(100vh - 260px)" :data="filtered" @row-click="selectRow" highlight-current-row border stripe>
         <el-table-column prop="ID" label="ID" width="180" sortable />
         <el-table-column prop="Name" label="名称" sortable />
-        <el-table-column prop="Character" label="角色" width="120" sortable />
-        <el-table-column prop="Combo" label="流派" width="120" sortable />
+        <el-table-column prop="Character" label="角色" width="120" sortable>
+          <template #="{row}">
+            <CharacterTag :value="row.Character" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="Combo" label="流派" width="120" sortable>
+          <template #="{row}">
+            <ComboTag :value="row.Combo" />
+          </template>
+        </el-table-column>
         <el-table-column prop="Level" label="等级" width="80" sortable />
         <el-table-column prop="EffectDescription" label="效果描述" min-width="240" show-overflow-tooltip />
         <el-table-column prop="EffectString" label="效果字符串" min-width="260" show-overflow-tooltip />
@@ -55,6 +59,10 @@
                 <el-input v-else-if="textAreaFields.has(key)" type="textarea" :rows="3" v-model="(editBuffer as any)[key]" />
                 <el-input-number v-else-if="numberFields.has(key)" :min="0" v-model="(editBuffer as any)[key]" />
                 <el-switch v-else-if="switchFields.has(key)" :active-value="1" :inactive-value="0" v-model="(editBuffer as any)[key]" />
+                <!-- 角色 -->
+                <CharacterSelect v-else-if="key === 'Character'" v-model="editBuffer.Character" />
+                <!-- 流派 -->
+                <ComboSelect v-else-if="key === 'Combo'" v-model="editBuffer.Combo" />
                 <el-input v-else v-model="(editBuffer as any)[key]" />
               </el-form-item>
             </template>
@@ -99,6 +107,10 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '../store/data'
 import { getData, validate, decodeEncrypted, encodeEncrypted, shareCreate } from '../api'
+import CharacterTag from '../components/tag/CharacterTag.vue'
+import ComboTag from '../components/tag/ComboTag.vue'
+import CharacterSelect from '../components/edit/CharacterSelect.vue'
+import ComboSelect from '../components/edit/ComboSelect.vue'
 
 const store = useDataStore()
 const pendants = computed(() => store.pendants)
@@ -131,20 +143,7 @@ const fieldLabels: Record<string,string> = {
 const numberFields = new Set(['Level','ForbidState'])
 const switchFields = new Set(['CanGainByPack'])
 const textAreaFields = new Set(['EffectDescription','EffectString'])
-const textFields = new Set(['Name','ID','Character','Combo'])
-
-const characterOptions = computed(() => {
-  if (!pendants.value) return [] as string[]
-  const set = new Set<string>()
-  for (const p of pendants.value.Pendant) if (p.Character) set.add(String(p.Character))
-  return Array.from(set).sort()
-})
-const comboOptions = computed(() => {
-  if (!pendants.value) return [] as string[]
-  const set = new Set<string>()
-  for (const p of pendants.value.Pendant) if (p.Combo) set.add(String(p.Combo))
-  return Array.from(set).sort()
-})
+const textFields = new Set(['Name','ID'])
 
 const filtered = computed(() => {
   if (!pendants.value) return []

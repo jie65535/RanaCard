@@ -17,12 +17,8 @@
       
       <el-button :disabled="!cards" @click="openShare">分享改动</el-button>
       <el-input v-model="keyword" placeholder="搜索 ID/名称/效果" style="max-width: 320px" />
-      <el-select v-model="selectedCategory" clearable placeholder="类别" style="width: 140px">
-        <el-option v-for="c in categoryOptions" :key="c" :label="c" :value="c" />
-      </el-select>
-      <el-select v-model="selectedType" clearable placeholder="类型" style="width: 140px">
-        <el-option v-for="t in typeOptions" :key="t" :label="t" :value="t" />
-      </el-select>
+      <CategorySelect v-model="selectedCategory as any" clearable style="width: 140px" />
+      <TypeSelect v-model="selectedType as any" clearable style="width: 140px" />
     </div>
 
     <div v-if="!cards" class="empty">请先加载游戏数据或导入加密文件</div>
@@ -31,8 +27,16 @@
       <el-table height="calc(100vh - 260px)" :data="filtered" @row-click="selectRow" highlight-current-row border stripe>
         <el-table-column prop="ID" label="ID" width="160" sortable />
         <el-table-column prop="Name" label="名称" sortable />
-        <el-table-column prop="Category" label="类别" width="120" sortable />
-        <el-table-column prop="Type" label="类型" width="120" sortable />
+        <el-table-column prop="Category" label="类别" width="120" sortable>
+          <template #="{row}">
+            <CategoryTag :value="row.Category" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="Type" label="类型" width="120" sortable>
+          <template #="{row}">
+            <TypeTag :value="row.Type" />
+          </template>
+        </el-table-column>
         <el-table-column prop="Level" label="等级" width="80" sortable />
         <el-table-column prop="EffectDescription" label="效果描述" min-width="240" show-overflow-tooltip />
         <el-table-column prop="EffectString" label="效果字符串" min-width="260" show-overflow-tooltip />
@@ -55,6 +59,14 @@
                 <el-input v-else-if="textAreaFields.has(key)" type="textarea" :rows="3" v-model="(editBuffer as any)[key]" />
                 <el-input-number v-else-if="numberFields.has(key)" :min="0" v-model="(editBuffer as any)[key]" />
                 <el-switch v-else-if="switchFields.has(key)" :active-value="1" :inactive-value="0" v-model="(editBuffer as any)[key]" />
+                <!-- 类别 -->
+                <CategorySelect v-else-if="key === 'Category'" v-model="editBuffer.Category" />
+                <!-- 类型 -->
+                <TypeSelect v-else-if="key === 'Type'" v-model="editBuffer.Type" />
+                <!-- 角色 -->
+                <CharacterSelect v-else-if="key === 'Character'" v-model="editBuffer.Character" />
+                <!-- 流派 -->
+                <ComboSelect v-else-if="key === 'Combo'" v-model="editBuffer.Combo" />
                 <el-input v-else v-model="(editBuffer as any)[key]" />
               </el-form-item>
             </template>
@@ -99,6 +111,12 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '../store/data'
 import { getData, validate, decodeEncrypted, encodeEncrypted, shareCreate } from '../api'
+import CategorySelect from '../components/edit/CategorySelect.vue'
+import CategoryTag from '../components/tag/CategoryTag.vue'
+import TypeTag from '../components/tag/TypeTag.vue'
+import TypeSelect from '../components/edit/TypeSelect.vue'
+import CharacterSelect from '../components/edit/CharacterSelect.vue'
+import ComboSelect from '../components/edit/ComboSelect.vue'
 
 const store = useDataStore()
 const cards = computed(() => store.cards)
@@ -134,20 +152,7 @@ const fieldLabels: Record<string,string> = {
 const numberFields = new Set(['Level','SpecialVal','_growPeriod','_harvestIncome','_timeLabel'])
 const switchFields = new Set(['CanGainByPack'])
 const textAreaFields = new Set(['EffectDescription','EffectString'])
-const textFields = new Set(['Name','ID','Category','Type','Character','Combo'])
-
-const categoryOptions = computed(() => {
-  if (!cards.value) return [] as string[]
-  const set = new Set<string>()
-  for (const c of cards.value.Cards) if (c.Category) set.add(String(c.Category))
-  return Array.from(set).sort()
-})
-const typeOptions = computed(() => {
-  if (!cards.value) return [] as string[]
-  const set = new Set<string>()
-  for (const c of cards.value.Cards) if (c.Type) set.add(String(c.Type))
-  return Array.from(set).sort()
-})
+const textFields = new Set(['Name','ID'])
 
 const filtered = computed(() => {
   if (!cards.value) return []

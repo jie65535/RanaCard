@@ -15,3 +15,8 @@ html.dark {
 pre, code, kbd, samp {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
