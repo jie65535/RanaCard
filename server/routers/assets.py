@@ -46,7 +46,7 @@ class ValidateResult(BaseModel):
 
 
 @router.post("/validate", response_model=ValidateResult)
-def validate_payload(kind: str, payload: Dict[str, Any]) -> ValidateResult:
+def validate_payload(kind: str, payload: Any) -> ValidateResult:
     kind_l = kind.lower()
     errors: List[str] = []
 
