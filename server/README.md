@@ -8,7 +8,7 @@
 
 ## API（M1）
 - `GET /api/data/card` | `/api/data/pendant` 返回官方数据（同 `/baseline/*` 兼容）
-- `POST /api/validate?kind=card|pendant` 结构校验与简单约束
+- `POST /api/validate?kind=card|pendant|mapevent|begineffect` 结构校验与简单约束
 - `POST /api/decode` multipart 上传加密文件 -> 返回 JSON
 - `POST /api/encode` body `{ payload }` -> 返回加密文本（可直接保存为游戏同名文件）
 
