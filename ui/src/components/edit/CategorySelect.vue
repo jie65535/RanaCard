@@ -1,16 +1,10 @@
 <template>
-    <el-select
+    <CommonSelect
         v-model="modelValue"
         :placeholder="placeholder"
         :clearable="clearable"
-        style="width: 100%;">
-        <el-option
-            v-for="option in CategoryOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-        />
-    </el-select>
+        :options="CategoryOptions"
+    />
 </template>
 
 <style scoped>
@@ -20,6 +14,7 @@
 import { storeToRefs } from 'pinia';
 import useStoreBase from '../../store/storeBase';
 import { IEnumCategory } from '../../utils/enum/base';
+import CommonSelect from './CommonSelect.vue';
 
 const props = withDefaults(defineProps<{
     clearable?: boolean;

@@ -1,46 +1,49 @@
+<!-- 条件 -->
 <template>
-  <div class="cond-row">
-    <el-select v-model="local.target" placeholder="目标" filterable allow-create style="width: 180px">
-      <el-option v-for="t in targets" :key="t.id" :label="t.label" :value="t.id" />
-    </el-select>
-    <el-select v-model="local.attr" placeholder="属性" filterable allow-create style="width: 200px">
-      <el-option v-for="a in attrs" :key="a.id" :label="a.label" :value="a.id" />
-    </el-select>
-    <el-select v-model="local.op" placeholder="比较" style="width: 140px">
-      <el-option v-for="o in cmps" :key="o.id" :label="o.label" :value="o.id" />
-    </el-select>
-    <el-input v-model="local.value" placeholder="值/表达式" style="width: 220px" />
-    <el-button size="small" @click="showBuilder=true">构造</el-button>
-    <BuilderDialog v-model="showBuilder" @done="onBuilt" />
-  </div>
-  
+	<div class="cond-row">
+		<CommonSelect v-model="local.target" :options="targetOptions" placeholder="目标" style="width: 180px" filterable />
+		<CommonSelect v-model="local.attr" :options="attrOptions" placeholder="属性" style="width: 200px" filterable />
+		<CommonSelect v-model="local.op" :options="cmpOptions" placeholder="比较" style="width: 140px" />
+		<el-input v-model="local.value" placeholder="值/表达式" style="width: 220px" />
+		<el-button size="small" @click="showBuilder=true">构造</el-button>
+		<BuilderDialog v-model="showBuilder" @done="onBuilt" />
+	</div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
-import { targets as targets_, attrs as attrs_, cmpOps as cmps_ } from './dslDict'
+import useStoreEffectString from '../../store/storeEffectString'
+import { storeToRefs } from 'pinia'
 import BuilderDialog from './BuilderDialog.vue'
+import CommonSelect from '../edit/CommonSelect.vue'
 
-export interface Condition {
-  target?: string
-  attr?: string
-  op?: string
-  value?: string
-}
+const props = defineProps<{ modelValue: Types.Editor.EffectString.Condition }>()
+const emit = defineEmits<{
+  (e:'update:modelValue', v:Types.Editor.EffectString.Condition): void
+}>()
 
-const props = defineProps<{ modelValue: Condition }>()
-const emit = defineEmits<{ (e:'update:modelValue', v:Condition): void }>()
+const storeEffectString = useStoreEffectString();
+const { targetOptions, attrOptions, cmpOptions } = storeToRefs(storeEffectString);
 
-const targets = targets_
-const attrs = attrs_
-const cmps = cmps_
-
-const local = reactive<Condition>({ ...props.modelValue })
+const local = ref<Types.Editor.EffectString.Condition>({ ...props.modelValue })
 const showBuilder = ref(false)
 
-watch(() => props.modelValue, (v) => { Object.assign(local, v) })
-watch(local, () => emit('update:modelValue', { ...local }), { deep: true })
-function onBuilt(v: string){ local.value = v }
+watch(() => props.modelValue, (v) => {
+	let _n = JSON.stringify(v);
+	let _o = JSON.stringify(local.value);
+	if (_n !== _o) {
+		Object.assign(local.value, v)
+	}
+}, { immediate: true, deep: true })
+watch(local, () => {
+	let _n = JSON.stringify(local.value);
+	let _o = JSON.stringify(props.modelValue);
+	if (_n !== _o) {
+		emit('update:modelValue', local.value)
+	}
+}, { deep: true })
+
+function onBuilt(v: string){ local.value.value = v }
 </script>
 
 <style scoped>

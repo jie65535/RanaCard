@@ -1,98 +1,136 @@
+<!-- 触发时机 -->
 <template>
-  <el-card class="sentence-card" shadow="never">
-    <template #header>
-      <div class="head">
-        <el-select v-model="local.trigger" placeholder="触发" style="width: 220px" filterable>
-          <el-option v-for="t in triggers_" :key="t.id" :label="t.label" :value="t.id" />
-        </el-select>
-        <template v-if="local.trigger==='Watch' || local.trigger==='Watch(...)'">
-          <WatchEditor v-model="local.triggerArgs" />
-        </template>
-        <div class="spacer"></div>
-        <el-checkbox v-model="local.consume">消耗</el-checkbox>
-        <el-checkbox v-model="local.foresee">预见</el-checkbox>
-        <slot name="tools"></slot>
-      </div>
-    </template>
+	<el-card class="sentence-card" shadow="never">
+		<template #header>
+			<div class="head">
+				<CommonSelect v-model="local.trigger" :options="triggerOptions" placeholder="触发" style="width: 220px" filterable />
+				<template v-if="local.trigger==='Watch' || local.trigger==='Watch(...)'">
+					<WatchEditor v-model="local.triggerArgs" />
+				</template>
+				<div class="spacer"></div>
+				<el-checkbox v-model="local.consume">消耗</el-checkbox>
+				<el-checkbox v-model="local.foresee">预见</el-checkbox>
+				<slot name="tools"></slot>
+			</div>
+		</template>
 
-    <div class="section">
-      <div class="section-title">条件与动作</div>
-      <div class="segments">
-        <div v-for="(seg, i) in local.segments" :key="seg._id || i" class="segment">
-          <div class="cond-bar">
-            <template v-if="hasCond(seg)">
-              <ConditionRow v-model="seg.cond" />
-              <el-button link @click="clearCond(i)">清除条件</el-button>
-            </template>
-            <template v-else>
-              <el-button size="small" type="primary" text @click="addCond(i)">添加条件</el-button>
-            </template>
-            <div class="spacer"></div>
-            <el-button link type="danger" @click="removeSegment(i)">移除片段</el-button>
-          </div>
-          <div class="actions">
-            <div v-for="(a, j) in seg.actions" :key="a._id || j" class="action-line">
-              <ActionRow v-model="seg.actions[j]" />
-              <el-button link type="danger" @click="removeAction(i, j)">删除动作</el-button>
-            </div>
-            <el-button size="small" @click="addAction(i)">添加动作</el-button>
-          </div>
-          <el-divider />
-        </div>
-        <el-button @click="addSegment">新增片段</el-button>
-      </div>
-    </div>
+		<div class="section">
+			<div class="section-title">条件与动作</div>
+			<div class="segments">
+				<div v-for="(seg, i) in local.segments" :key="seg._id || i" class="segment">
+					<div class="cond-bar">
+						<template v-if="hasCond(seg)">
+							<ConditionRow v-model="seg.cond" />
+							<el-button link @click="clearCond(i)">清除条件</el-button>
+						</template>
+						<template v-else>
+							<el-button size="small" type="primary" text @click="addCond(i)">添加条件</el-button>
+						</template>
+						<div class="spacer"></div>
+						<el-button link type="danger" @click="removeSegment(i)">移除片段</el-button>
+					</div>
+					<div class="actions">
+						<div v-for="(a, j) in seg.actions" :key="a._id || j" class="action-line">
+							<ActionRow v-model="local.segments[i].actions[j]" />
+							<el-button link type="danger" @click="removeAction(i, j)">删除动作</el-button>
+						</div>
+						<el-button size="small" @click="addAction(i)">添加动作</el-button>
+					</div>
+					<el-divider />
+				</div>
+				<el-button @click="addSegment">新增片段</el-button>
+			</div>
+		</div>
 
-  </el-card>
+	</el-card>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import ConditionRow, { type Condition } from './ConditionRow.vue'
+import { reactive, ref, watch } from 'vue'
+import useStoreEffectString from '../../store/storeEffectString'
+import { storeToRefs } from 'pinia'
+import ConditionRow from './ConditionRow.vue'
 import WatchEditor from './WatchEditor.vue'
-import ActionRow, { type AnyAction } from './ActionRow.vue'
-import { triggers as trig } from './dslDict'
+import ActionRow from './ActionRow.vue'
+import CommonSelect from '../edit/CommonSelect.vue'
 
-export type Segment = { cond: Condition, actions: AnyAction[] }
-export type Sentence = { trigger: string, triggerArgs?: string, segments: Segment[], consume?: boolean, foresee?: boolean }
+const props = defineProps<{
+	modelValue: Types.Editor.EffectString.Sentence
+}>()
+const emit = defineEmits<{
+	(e:'update:modelValue', v:Types.Editor.EffectString.Sentence): void
+}>()
 
-const props = defineProps<{ modelValue: Sentence }>()
-const emit = defineEmits<{ (e:'update:modelValue', v:Sentence): void }>()
+const local = ref<Types.Editor.EffectString.Sentence>(JSON.parse(JSON.stringify(props.modelValue)));
 
-const local = reactive<Sentence>({ ...props.modelValue })
-const triggers_ = trig
+const storeEffectString = useStoreEffectString();
+const { triggerOptions } = storeToRefs(storeEffectString);
 
-watch(() => props.modelValue, (v) => { Object.assign(local, v); ensureIds() })
-watch(local, () => emit('update:modelValue', JSON.parse(JSON.stringify(local))), { deep: true })
+watch(() => props.modelValue, (v) => {
+	let _n = JSON.stringify(v);
+	let _o = JSON.stringify(local.value);
+	if (_n !== _o) {
+		Object.assign(local.value, v);
+		ensureIds()
+	}
+}, { immediate: true, deep: true })
+watch(local, (v) => {
+	let _n = JSON.stringify(v);
+	let _o = JSON.stringify(props.modelValue);
+	if (_n !== _o) {
+		emit('update:modelValue', JSON.parse(_n));
+	}
+}, { deep: true })
 
-function addSegment(){ local.segments.push({ _id: Math.random().toString(36).slice(2), cond: {}, actions: [] } as any) }
-function removeSegment(i:number){ local.segments.splice(i,1) }
+function addSegment() {
+	local.value.segments.push({
+		_id: Math.random().toString(36).slice(2),
+		cond: {},
+		actions: []
+	} as any)
+}
+function removeSegment(i:number) {
+	local.value.segments.splice(i,1)
+}
 function addAction(i:number){
-  const seg: any = local.segments[i]
+  const seg: any = local.value.segments[i]
   const next = [...(seg.actions || []), { _id: Math.random().toString(36).slice(2), type:'attr', target:'Self', attr:'Growth', mode:'add', value:'1' }]
   seg.actions = next
 }
 function removeAction(i:number, j:number){
-  const seg: any = local.segments[i]
+  const seg: any = local.value.segments[i]
   const next = (seg.actions || []).slice()
   next.splice(j,1)
   seg.actions = next
 }
 
-function hasCond(seg: any){ return !!(seg?.cond && seg.cond.target && seg.cond.attr && seg.cond.op && seg.cond.value!==undefined && seg.cond.value!=='') }
+/**
+ * 判断是否有条件
+ */
+function hasCond(seg: Types.Editor.EffectString.Segment): boolean {
+	return !!(seg?.cond && seg.cond.target && seg.cond.attr && seg.cond.op && seg.cond.value!==undefined && seg.cond.value!=='')
+}
+/**
+ * 添加条件
+ * @param i 
+ */
 function addCond(i:number){
-  const seg:any = local.segments[i]
+  const seg:any = local.value.segments[i]
   if (!seg) return
   seg.cond = { target:'Self', attr:'CountVal', op:'Equal', value:'1' }
 }
+/**
+ * 清除条件
+ * @param i 
+ */
 function clearCond(i:number){
-  const seg:any = local.segments[i]
+  const seg:any = local.value.segments[i]
   if (!seg) return
   seg.cond = {}
 }
 
 function ensureIds(){
-  local.segments.forEach((s: any) => {
+  local.value.segments.forEach((s: any) => {
     if (!s._id) s._id = Math.random().toString(36).slice(2)
     s.actions = s.actions || []
     s.actions.forEach((a: any) => { if (!a._id) a._id = Math.random().toString(36).slice(2) })

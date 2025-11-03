@@ -31,8 +31,6 @@ const useStoreBase = defineStore('base', () => {
         {label: '橙意满满', value: IEnumCharacter.BLOOD, type: 'danger'},
     ]);
     /** 流派 */
-    
-    /** 动物 */
     const ComboOptions = ref<Types.Core.OptionItem<IEnumCombo>[]>([
         {label: '中立', value: IEnumCombo.NEUTRAL, type: 'primary'},
         {label: '全局增长', value: IEnumCombo.ALL_GROW, type: 'success'},

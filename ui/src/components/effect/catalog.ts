@@ -1,4 +1,4 @@
-import { type CardData, type PendantData, type BeginEffect } from '../../store/data'
+import { type CardRoot, type PendantRoot, type BeginEffect } from '../../store/data'
 
 export interface Catalog {
   triggers: string[]
@@ -75,7 +75,7 @@ export function scanEffectString(eff: string, examples: Record<string, string[]>
   return { triggers, functions, attrs, targets, comps }
 }
 
-export function buildCatalog(data: { cards?: CardData | null, pendants?: PendantData | null, begin?: BeginEffect[] | null }): Catalog {
+export function buildCatalog(data: { cards?: CardRoot | null, pendants?: PendantRoot | null, begin?: BeginEffect[] | null }): Catalog {
   const examples: Record<string, string[]> = {}
   const T = new Set<string>()
   const F = new Set<string>()
