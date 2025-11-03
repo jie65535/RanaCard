@@ -66,37 +66,17 @@
       </div>
     </el-drawer>
 
-    <el-alert v-if="errors.length" type="error" title="校验失败" show-icon :closable="false" style="margin-top: 8px">
-      <template #default>
-        <div v-for="(e, i) in errors" :key="i">• {{ e }}</div>
-      </template>
-    </el-alert>
-    
-    <el-dialog v-model="shareVisible" title="分享改动" width="620px">
-      <el-form label-width="100px">
-        <el-form-item label="标题">
-          <el-input v-model="shareTitle" placeholder="例如：开局效果重做/合集" />
-        </el-form-item>
-        <el-form-item label="作者">
-          <el-input v-model="shareAuthor" placeholder="你的名字" />
-        </el-form-item>
-        <el-form-item label="说明">
-          <el-input v-model="shareDescription" type="textarea" :rows="6" placeholder="详细描述你的改动、思路与使用建议（支持多行）" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="shareVisible=false">取消</el-button>
-        <el-button type="primary" :disabled="!shareTitle.trim() || !shareAuthor.trim() || !shareDescription.trim()" @click="doShare">发布</el-button>
-      </template>
-    </el-dialog>
+    <ShareDialog ref="ShareDialogDom" :type="'begineffect'" :post-type="'beginEffects'" placeholder="例如：开局效果重做/合集" />
+    <ErrorAlert :errors="errors" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useDataStore, type BeginEffect } from '../store/data'
-import { decodeEncrypted, encodeEncrypted, getData, validate, shareCreate } from '../api'
+import { decodeEncrypted, encodeEncrypted, getData, validate } from '../api'
+import ShareDialog from '../components/common/ShareDialog.vue'
+import ErrorAlert from '../components/common/ErrorAlert.vue'
 
 const store = useDataStore()
 const beginEffects = computed(() => store.beginEffects)
@@ -115,11 +95,6 @@ const editorVisible = ref(false)
 const jsonMode = ref(false)
 const advancedText = ref('')
 const errors = ref<string[]>([])
-const shareVisible = ref(false)
-const shareTitle = ref('')
-const shareAuthor = ref(localStorage.getItem('share.author') || '')
-const shareDescription = ref('')
-const router = useRouter()
 
 const filtered = computed(() => {
   const list = beginEffects.value || []
@@ -136,6 +111,8 @@ const filtered = computed(() => {
     return kwOk && unOk && minOk && maxOk
   })
 })
+
+const ShareDialogDom = ref<InstanceType<typeof ShareDialog> | null>(null)
 
 function selectRow(row: any) {
   originalRef.value = row
@@ -174,28 +151,7 @@ async function runValidate() {
 }
 
 function openShare() {
-  shareTitle.value = ''
-  shareDescription.value = ''
-  shareVisible.value = true
-}
-
-async function doShare() {
-  if (!beginEffects.value) return
-  const res = await validate('begineffect', beginEffects.value)
-  if (!res.ok) { errors.value = res.errors; return }
-  try {
-    const { id, url, manageToken } = await shareCreate({ title: shareTitle.value, author: shareAuthor.value || undefined, description: shareDescription.value || undefined }, { beginEffects: beginEffects.value })
-    const map = JSON.parse(localStorage.getItem('share.manageTokens') || '{}')
-    map[id] = manageToken
-    localStorage.setItem('share.manageTokens', JSON.stringify(map))
-    if (shareAuthor.value.trim()) localStorage.setItem('share.author', shareAuthor.value.trim())
-    shareVisible.value = false
-    const full = (import.meta as any).env?.VITE_API_BASE ? `${(import.meta as any).env.VITE_API_BASE.replace(/\/+$/, '')}${url}` : url
-    alert('发布成功！\n分享链接：' + full)
-    router.push(`/share?id=${id}`)
-  } catch (e: any) {
-    alert('发布失败：' + (e?.message || '未知错误'))
-  }
+  ShareDialogDom.value?.show(beginEffects.value)
 }
 
 function loadAdvanced() {

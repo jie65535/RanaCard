@@ -2,15 +2,7 @@
   <el-container style="height: 100vh">
     <el-header height="56px" class="app-header">
       <div class="brand">种呱得呱助手</div>
-      <div class="nav">
-        <el-button link @click="$router.push('/cards')">卡牌</el-button>
-        <el-button link @click="$router.push('/pendants')">挂件</el-button>
-        <el-button link @click="$router.push('/map-events')">地图事件</el-button>
-        <el-button link @click="$router.push('/begin-effects')">开局效果</el-button>
-        <el-button link @click="$router.push('/share')">社区分享</el-button>
-        <el-button link type="primary" @click="openOfficial">官方文档</el-button>
-        <el-button link @click="$router.push('/help/effects')">效果教程</el-button>
-      </div>
+      <TopNav />
       <div class="spacer" />
       <div class="actions">
         <el-tooltip content="查看源代码" placement="bottom">
@@ -41,6 +33,7 @@
 import { computed } from 'vue'
 import { useTheme } from './composables/useTheme'
 import { Sunny, Moon } from '@element-plus/icons-vue'
+import TopNav from './components/common/TopNav.vue'
 
 const { isDark, setMode } = useTheme()
 const tooltip = computed(() => (isDark.value ? '切换亮色' : '切换暗色'))
@@ -61,7 +54,6 @@ function openGithub() {
 <style scoped>
 .app-header { display: flex; align-items: center; gap: 16px; }
 .brand { font-weight: 600; }
-.nav { display: flex; gap: 8px; align-items: center; }
 .spacer { flex: 1; }
 .actions { display: flex; align-items: center; gap: 12px; margin-right: 8px; }
 .version { opacity: 0.7; }
