@@ -90,39 +90,20 @@
       </div>
     </el-drawer>
 
-    <el-alert v-if="errors.length" type="error" show-icon :closable="false" :title="'校验失败：' + errors.length + ' 项'">
-      <template #default>
-        <div v-for="(e,i) in errors" :key="i">{{ e }}</div>
-      </template>
-    </el-alert>
-    <el-dialog v-model="shareVisible" title="分享改动" width="620px">
-      <el-form label-width="100px">
-        <el-form-item label="标题">
-          <el-input v-model="shareTitle" placeholder="例如：新增/调整地图事件集" />
-        </el-form-item>
-        <el-form-item label="作者">
-          <el-input v-model="shareAuthor" placeholder="你的名字" />
-        </el-form-item>
-        <el-form-item label="说明">
-          <el-input v-model="shareDescription" type="textarea" :rows="6" placeholder="详细描述你的改动、思路与使用建议（支持多行）" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="shareVisible=false">取消</el-button>
-        <el-button type="primary" :disabled="!shareTitle.trim() || !shareAuthor.trim() || !shareDescription.trim()" @click="doShare">发布</el-button>
-      </template>
-    </el-dialog>
+    <ShareDialog ref="ShareDialogDom" :type="'mapevent'" :post-type="'mapEvents'" placeholder="例如：新增/调整地图事件集" />
+    <ErrorAlert :errors="errors" />
   </div>
 
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useDataStore } from '../store/data'
-import { getData, validate, decodeEncrypted, encodeEncrypted, shareCreate } from '../api'
+import { getData, validate, decodeEncrypted, encodeEncrypted } from '../api'
 import CharacterSelect from '../components/edit/CharacterSelect.vue'
 import CharacterTag from '../components/tag/CharacterTag.vue'
+import ShareDialog from '../components/common/ShareDialog.vue'
+import ErrorAlert from '../components/common/ErrorAlert.vue'
 
 const store = useDataStore()
 const mapEvents = computed(() => store.mapEvents)
@@ -139,18 +120,6 @@ const width = ref<number>(typeof window !== 'undefined' ? window.innerWidth : 12
 const drawerSize = computed(() => width.value < 900 ? '100%' : '640px')
 const advancedText = ref('')
 const errors = ref<string[]>([])
-const shareVisible = ref(false)
-const shareTitle = ref('')
-const shareAuthor = ref(localStorage.getItem('share.author') || '')
-const shareDescription = ref('')
-const router = useRouter()
-
-const characterOptions = computed(() => {
-  if (!mapEvents.value) return [] as string[]
-  const set = new Set<string>()
-  for (const e of mapEvents.value) if (e.Character) set.add(String(e.Character))
-  return Array.from(set).sort()
-})
 
 const filtered = computed(() => {
   if (!mapEvents.value) return []
@@ -171,6 +140,8 @@ const filtered = computed(() => {
     return kwOk && chOk && minOk && maxOk
   })
 })
+
+const ShareDialogDom = ref<InstanceType<typeof ShareDialog> | null>(null)
 
 function selectRow(row: any) {
   originalRef.value = row
@@ -210,28 +181,7 @@ async function runValidate() {
 }
 
 function openShare() {
-  shareTitle.value = ''
-  shareDescription.value = ''
-  shareVisible.value = true
-}
-
-async function doShare() {
-  if (!mapEvents.value) return
-  const res = await validate('mapevent', mapEvents.value)
-  if (!res.ok) { errors.value = res.errors; return }
-  try {
-    const { id, url, manageToken } = await shareCreate({ title: shareTitle.value, author: shareAuthor.value || undefined, description: shareDescription.value || undefined }, { mapEvents: mapEvents.value })
-    const map = JSON.parse(localStorage.getItem('share.manageTokens') || '{}')
-    map[id] = manageToken
-    localStorage.setItem('share.manageTokens', JSON.stringify(map))
-    if (shareAuthor.value.trim()) localStorage.setItem('share.author', shareAuthor.value.trim())
-    shareVisible.value = false
-    const full = (import.meta as any).env?.VITE_API_BASE ? `${(import.meta as any).env.VITE_API_BASE.replace(/\/+$/, '')}${url}` : url
-    alert('发布成功！\n分享链接：' + full)
-    router.push(`/share?id=${id}`)
-  } catch (e: any) {
-    alert('发布失败：' + (e?.message || '未知错误'))
-  }
+  ShareDialogDom.value?.show(mapEvents.value)
 }
 
 function loadAdvanced() {
@@ -275,7 +225,10 @@ onMounted(() => {
   }
 })
 
-watch(mapEvents, () => { errors.value = [] })
+watch(mapEvents, () => {
+  errors.value = [];
+  ShareDialogDom.value?.clearErrors();
+})
 
 function onCancel() {
   editorVisible.value = false
