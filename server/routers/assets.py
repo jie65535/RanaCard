@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Response
+from fastapi import APIRouter, HTTPException, UploadFile, File, Response, Body
 from pydantic import BaseModel, Field
 
 
@@ -46,7 +46,7 @@ class ValidateResult(BaseModel):
 
 
 @router.post("/validate", response_model=ValidateResult)
-def validate_payload(kind: str, payload: Dict[str, Any]) -> ValidateResult:
+def validate_payload(kind: str, payload: Any = Body(...)) -> ValidateResult:
     kind_l = kind.lower()
     errors: List[str] = []
 
