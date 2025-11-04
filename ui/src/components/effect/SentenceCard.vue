@@ -61,7 +61,7 @@ const emit = defineEmits<{
 	(e:'update:modelValue', v:Types.Editor.EffectString.Sentence): void
 }>()
 
-const local = ref<Types.Editor.EffectString.Sentence>(JSON.parse(JSON.stringify(props.modelValue)));
+const local = ref<Types.Editor.EffectString.Sentence>({} as any);
 
 const storeEffectString = useStoreEffectString();
 const { triggerOptions } = storeToRefs(storeEffectString);
@@ -70,7 +70,7 @@ watch(() => props.modelValue, (v) => {
 	let _n = JSON.stringify(v);
 	let _o = JSON.stringify(local.value);
 	if (_n !== _o) {
-		Object.assign(local.value, v);
+		local.value = JSON.parse(_n);
 		ensureIds()
 	}
 }, { immediate: true, deep: true })

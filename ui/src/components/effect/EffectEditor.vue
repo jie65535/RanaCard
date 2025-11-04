@@ -69,7 +69,6 @@ function emitDSL(){
 	emit('update:modelValue', dslText.value)
 }
 function emitFromVisual(){
-	console.log('emitFromVisual called', props.modelValue)
 	if (tab.value !== 'visual') return
 	const v = (preview.value || '').trim()
 	// 同步 DSL 预览文本
@@ -164,15 +163,21 @@ function applyFromTemplate(name:'grow1'|'money3'){
 }
 function applyBeginTemplate(name:'vip') { beginCmds.value.splice(0); beginCmds.value.push({ kind:'GlobalAdd', attr:'Money', value:'-80' } as any); beginCmds.value.push({ kind:'AddPendant', name:'会员卡' } as any); dirtyFromVisual.value = true; emitFromVisual() }
 
-function serAction(a:any){
-  if(a.type==='attr'){ const v=a.mode==='set'?`=${a.value}`:a.value; return `[${a.target},${a.attr},${v}]` }
-if(a.type==='func'){
-  const rawArgs = (a as any).__rawArgs as string | undefined
-  const args = rawArgs != null ? rawArgs : (a.args||[]).map((x:any)=>x.value).join(';')
-  return `[${a.name}(${args})]`
-}
-  if(a.type==='raw'){ return `[${a.raw}]` }
-  return ''
+function serAction(a: Types.Editor.EffectString.AnyAction){
+	if (a.type==='attr') {
+		const v = a.mode === 'set' ? `=${a.value}` : a.value;
+		return `[${a.target},${a.attr},${v}]`
+	}
+	if (a.type==='func') {
+		const rawArgs = (a as any).__rawArgs as string | undefined;
+		const value = (a.args||[]).map((x:any) => x.value).join(';');
+		const args = value || rawArgs;
+		return `[${a.name}(${args})]`
+	}
+	// if (a.type === 'raw') {
+	// 	return `[${a.raw}]`
+	// }
+	return ''
 }
 function serializeSentence(s: Types.Editor.EffectString.Sentence): string {
 	const inner = s.segments.map(seg => {
@@ -189,7 +194,9 @@ function serializeSentence(s: Types.Editor.EffectString.Sentence): string {
 	const trig = (s.trigger==='Watch' || s.trigger==='Watch(...)') ? `Watch(${s.triggerArgs || 'Harvest,None'})` : s.trigger
 	return `${trig} ${block}${tagStr}`
 }
-function serializeSentences(): string { return sentences.value.map(serializeSentence).join(' # ') }
+function serializeSentences(): string {
+	return sentences.value.map(serializeSentence).join(' # ')
+}
 function serializeBegin(): string {
 	return beginCmds.value.map((b:any)=>
 		b.kind==='GlobalAdd'
