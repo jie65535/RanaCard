@@ -75,7 +75,7 @@ async function doShare() {
         title: shareTitle.value,
         author: shareAuthor.value || undefined,
         description: shareDescription.value || undefined
-    }, { [props.type]: postData.value })
+    }, { [props.postType]: postData.value })
     // save token for self-manage
     const map = JSON.parse(localStorage.getItem('share.manageTokens') || '{}')
     map[id] = manageToken
