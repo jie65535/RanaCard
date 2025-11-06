@@ -25,7 +25,7 @@ const useStoreBase = defineStore('base', () => {
     ]);
     /** 角色 */
     const CharacterOptions = ref<Types.Core.OptionItem<IEnumCharacter>[]>([
-        {label: '全部', value: IEnumCharacter.ALL, type: 'primary'},
+        {label: '通用', value: IEnumCharacter.ALL, type: 'primary'},
         {label: '强力生长', value: IEnumCharacter.STRONG_GROW, type: 'success'},
         {label: '动物亲和', value: IEnumCharacter.ANIMAL, type: 'warning'},
         {label: '橙意满满', value: IEnumCharacter.BLOOD, type: 'danger'},
@@ -36,9 +36,9 @@ const useStoreBase = defineStore('base', () => {
         {label: '全局增长', value: IEnumCombo.ALL_GROW, type: 'success'},
         {label: '强力生长', value: IEnumCombo.STRONG_GROW, type: 'info'},
         {label: '橙意满满', value: IEnumCombo.BLOOD, type: 'danger'},
-        {label: 'B-过量', value: IEnumCombo.B_EXCESS, bgColor: '#8B0000', textColor: '#FFFFFF'},
-        {label: 'B-数字', value: IEnumCombo.B_NUM, bgColor: '#00008B', textColor: '#FFFFFF'},
-        {label: 'B-时间', value: IEnumCombo.B_TIMES, bgColor: '#006400', textColor: '#FFFFFF'},
+        {label: '超额回复', value: IEnumCombo.B_EXCESS, bgColor: '#8B0000', textColor: '#FFFFFF'},
+        {label: '扣血数量', value: IEnumCombo.B_NUM, bgColor: '#00008B', textColor: '#FFFFFF'},
+        {label: '扣血次数', value: IEnumCombo.B_TIMES, bgColor: '#006400', textColor: '#FFFFFF'},
         {label: '动物', value: IEnumCombo.ANIMALS, type: 'warning'},
         {label: '鸡', value: IEnumCombo.CHICKEN, bgColor: '#FFD700', textColor: '#000000'},
         {label: '诅咒', value: IEnumCombo.CURSE, bgColor: '#4B0082', textColor: '#FFFFFF'},
