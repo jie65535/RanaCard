@@ -63,6 +63,7 @@ const tab = ref<'filter'|'tally'|'random'>('filter')
 const domains = ['Around','Bag','Hand','CardCollection','LandPlant','Global']
 const fields = ['Name','ID','Type','Category','TimeLabel','EffectString']
 const ops = ['Is','IsNot','Equal','Contain']
+const sources = ['LandPlant','Bag','Hand','CardCollection','Global']
 const source = ref('LandPlant')
 const count = ref(1)
 const domain = ref('Around')
@@ -83,4 +84,3 @@ function apply(){
 <style scoped>
 .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin: 6px 0 }
 </style>
-

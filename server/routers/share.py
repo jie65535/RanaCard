@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from .assets import ValidateResult, validate_payload  # reuse existing validators
+from .patch import SUPPORTED_KINDS, diff_patch  # for patch-kind validation and migration
 
 
 router = APIRouter(prefix="/api/share", tags=["share"])
@@ -43,6 +44,78 @@ def _load_index() -> Dict[str, Any]:
 def _save_index(idx: Dict[str, Any]) -> None:
     with INDEX_PATH.open("w", encoding="utf-8") as f:
         json.dump(idx, f, ensure_ascii=False, indent=2)
+
+
+def run_migration() -> None:
+    """Migrate legacy share files (with `data`) into patch format once.
+    Creates a flag file to avoid repeating work.
+    """
+    _ensure_store()
+    flag = STORE_DIR / "migrated_v1.flag"
+    if flag.exists():
+        return
+    idx = _load_index()
+    items = idx.get("items", [])
+    changed = False
+    for it in items:
+        # Skip already patch-mode entries
+        if it.get("mode") == "patch":
+            continue
+        sid = it.get("id")
+        if not sid:
+            continue
+        fpath = STORE_DIR / f"{sid}.json"
+        if not fpath.exists():
+            continue
+        try:
+            obj = json.loads(fpath.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        data = obj.get("data") if isinstance(obj, dict) else None
+        if not isinstance(data, dict):
+            # Nothing to migrate
+            continue
+        # Determine single kind present
+        mapping = {
+            "cards": "card",
+            "pendants": "pendant",
+            "mapEvents": "mapevent",
+            "beginEffects": "begineffect",
+        }
+        present = [k for k in mapping.keys() if k in data and data[k] is not None]
+        if not present:
+            continue
+        try:
+            meta = obj.get("meta") or {}
+            meta["mode"] = "patch"
+            patches: List[Dict[str, Any]] = []
+            kinds: List[str] = []
+            for data_key in present:
+                kind = mapping[data_key]
+                edited = data[data_key]
+                p = diff_patch(kind, edited)
+                patches.append(p)
+                kinds.append(kind)
+            # If只有一种，用单 patch；多种则用 patches 数组
+            if len(patches) == 1:
+                obj = {"meta": meta, "patch": patches[0]}
+                it["kinds"] = [kinds[0]]
+            else:
+                obj = {"meta": meta, "patches": patches}
+                it["kinds"] = sorted(list(set(kinds)))
+            fpath.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+            it["mode"] = "patch"
+            it["size"] = fpath.stat().st_size
+            changed = True
+        except Exception:
+            continue
+    if changed:
+        _save_index(idx)
+    # Create flag to avoid repeated migration
+    try:
+        flag.write_text("ok", encoding="utf-8")
+    except Exception:
+        pass
 
 
 def _gen_id(existing: set[str]) -> str:
@@ -86,8 +159,16 @@ async def create_share(request: Request) -> Dict[str, Any]:
 
     meta = body.get("meta") or {}
     data = body.get("data")
-    if not isinstance(data, dict):
+    patch = body.get("patch")
+    patches = body.get("patches")
+    if data is None and patch is None and patches is None:
+        raise HTTPException(status_code=400, detail="必须包含 data 或 patch/patches 之一")
+    if data is not None and not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="data 必须为对象")
+    if patch is not None and not isinstance(patch, dict):
+        raise HTTPException(status_code=400, detail="patch 必须为对象")
+    if patches is not None and not isinstance(patches, list):
+        raise HTTPException(status_code=400, detail="patches 必须为数组")
 
     title = meta.get("title")
     author = meta.get("author")
@@ -115,39 +196,74 @@ async def create_share(request: Request) -> Dict[str, Any]:
     if len(description_s) > 3000:
         raise HTTPException(status_code=400, detail="description 过长（最多 3000 字符）")
 
-    has_any = False
-    # Validate supported kinds using existing validators
-    if "cards" in data and data["cards"] is not None:
-        if not isinstance(data["cards"], dict):
-            raise HTTPException(status_code=400, detail="data.cards 必须为对象")
-        res: ValidateResult = validate_payload("card", data["cards"])  # type: ignore[arg-type]
-        if not res.ok:
-            raise HTTPException(status_code=400, detail={"kind": "card", "errors": res.errors})
-        has_any = True
-    if "pendants" in data and data["pendants"] is not None:
-        if not isinstance(data["pendants"], dict):
-            raise HTTPException(status_code=400, detail="data.pendants 必须为对象")
-        res = validate_payload("pendant", data["pendants"])  # type: ignore[arg-type]
-        if not res.ok:
-            raise HTTPException(status_code=400, detail={"kind": "pendant", "errors": res.errors})
-        has_any = True
-    if "mapEvents" in data and data["mapEvents"] is not None:
-        if not isinstance(data["mapEvents"], list):
-            raise HTTPException(status_code=400, detail="data.mapEvents 必须为数组")
-        res = validate_payload("mapevent", data["mapEvents"])  # type: ignore[arg-type]
-        if not res.ok:
-            raise HTTPException(status_code=400, detail={"kind": "mapevent", "errors": res.errors})
-        has_any = True
-    if "beginEffects" in data and data["beginEffects"] is not None:
-        if not isinstance(data["beginEffects"], list):
-            raise HTTPException(status_code=400, detail="data.beginEffects 必须为数组")
-        res = validate_payload("begineffect", data["beginEffects"])  # type: ignore[arg-type]
-        if not res.ok:
-            raise HTTPException(status_code=400, detail={"kind": "begineffect", "errors": res.errors})
-        has_any = True
-
-    if not has_any:
-        raise HTTPException(status_code=400, detail="data 至少包含 cards 或 pendants 之一")
+    mode = "data"
+    share_kinds: List[str] = []
+    if patch is not None or patches is not None:
+        # Patch mode: expect diff-like object: { meta?: {kind,...}, changes: {...} }
+        if patches is not None:
+            kinds: List[str] = []
+            for p in patches:
+                if not isinstance(p, dict):
+                    raise HTTPException(status_code=400, detail="patches[*] 必须为对象")
+                ch = p.get("changes")
+                if not isinstance(ch, dict):
+                    raise HTTPException(status_code=400, detail="patches[*].changes 缺失或格式错误")
+                kind = ((p.get("meta") or {}).get("kind") if isinstance(p.get("meta"), dict) else None)
+                if not isinstance(kind, str) or kind.lower() not in SUPPORTED_KINDS:
+                    raise HTTPException(status_code=400, detail="patches[*].meta.kind 无效")
+                kinds.append(kind.lower())
+            share_kinds = sorted(list(set(kinds)))
+        else:
+            ch = patch.get("changes") if isinstance(patch, dict) else None
+            if not isinstance(ch, dict):
+                raise HTTPException(status_code=400, detail="patch.changes 缺失或格式错误")
+            kind_from_meta = (patch.get("meta") or {}).get("kind") if isinstance(patch.get("meta"), dict) else None
+            kind = kind_from_meta or meta.get("kind")
+            if not isinstance(kind, str):
+                raise HTTPException(status_code=400, detail="无法识别 patch 的种类(kind)")
+            kind_l = kind.lower()
+            if kind_l not in SUPPORTED_KINDS:
+                raise HTTPException(status_code=400, detail=f"不支持的 patch 种类: {kind}")
+            share_kinds = [kind_l]
+        mode = "patch"
+        data = None  # ignore data when patch is present
+    else:
+        # Data mode: Validate supported kinds using existing validators
+        has_any = False
+        if "cards" in data and data["cards"] is not None:
+            if not isinstance(data["cards"], dict):
+                raise HTTPException(status_code=400, detail="data.cards 必须为对象")
+            res: ValidateResult = validate_payload("card", data["cards"])  # type: ignore[arg-type]
+            if not res.ok:
+                raise HTTPException(status_code=400, detail={"kind": "card", "errors": res.errors})
+            has_any = True
+            share_kinds.append("card")
+        if "pendants" in data and data["pendants"] is not None:
+            if not isinstance(data["pendants"], dict):
+                raise HTTPException(status_code=400, detail="data.pendants 必须为对象")
+            res = validate_payload("pendant", data["pendants"])  # type: ignore[arg-type]
+            if not res.ok:
+                raise HTTPException(status_code=400, detail={"kind": "pendant", "errors": res.errors})
+            has_any = True
+            share_kinds.append("pendant")
+        if "mapEvents" in data and data["mapEvents"] is not None:
+            if not isinstance(data["mapEvents"], list):
+                raise HTTPException(status_code=400, detail="data.mapEvents 必须为数组")
+            res = validate_payload("mapevent", data["mapEvents"])  # type: ignore[arg-type]
+            if not res.ok:
+                raise HTTPException(status_code=400, detail={"kind": "mapevent", "errors": res.errors})
+            has_any = True
+            share_kinds.append("mapevent")
+        if "beginEffects" in data and data["beginEffects"] is not None:
+            if not isinstance(data["beginEffects"], list):
+                raise HTTPException(status_code=400, detail="data.beginEffects 必须为数组")
+            res = validate_payload("begineffect", data["beginEffects"])  # type: ignore[arg-type]
+            if not res.ok:
+                raise HTTPException(status_code=400, detail={"kind": "begineffect", "errors": res.errors})
+            has_any = True
+            share_kinds.append("begineffect")
+        if not has_any:
+            raise HTTPException(status_code=400, detail="data 至少包含一个受支持的集合")
 
     # Normalize write object
     pkg_obj = {
@@ -157,9 +273,17 @@ async def create_share(request: Request) -> Dict[str, Any]:
             "description": description_s,
             "baseDataVersion": (base_ver or "").strip() if isinstance(base_ver, str) else "",
             "createdAt": created_at,
-        },
-        "data": {k: v for k, v in data.items() if k in ("cards", "pendants", "mapEvents", "beginEffects") and v is not None},
+            "mode": mode,
+            "kinds": share_kinds,
+        }
     }
+    if mode == "patch":
+        if patches is not None:
+            pkg_obj["patches"] = patches
+        else:
+            pkg_obj["patch"] = patch
+    else:
+        pkg_obj["data"] = {k: v for k, v in data.items() if k in ("cards", "pendants", "mapEvents", "beginEffects") and v is not None}
 
     # Persist
     idx = _load_index()
@@ -185,6 +309,8 @@ async def create_share(request: Request) -> Dict[str, Any]:
         "size": size,
         "downloads": 0,
         "tokenHash": token_hash,
+        "mode": mode,
+        "kinds": share_kinds,
     }
 
     items: List[Dict[str, Any]] = idx.get("items", [])
