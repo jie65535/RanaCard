@@ -10,10 +10,10 @@ export enum IEnumCategory {
 
 /** 类型 */
 export enum IEnumType {
-    /** 衍生物 */
-    DERIVATIVE  = 'Derivative',
     /** 普通 */
     NORMAL      = 'Normal',
+    /** 衍生物 */
+    DERIVATIVE  = 'Derivative',
     /** 植物 */
     PLANT       = 'Plant',
     /** 建筑 */
@@ -26,21 +26,21 @@ export enum IEnumType {
     MINERAL     = 'Mineral',
     /** 锭 */
     INGOT       = 'Ingot',
+    /** 昆虫 */
+    INSECT      = 'Insect',
     /** 灾难昆虫 */
     DISASTER_INSECT = 'DisasterInsect',
-    /** 昆虫 */
-    INSECT      = 'Insect'
 }
 
 /** 角色 */
 export enum IEnumCharacter {
-    /** 全部 */
+    /** 通用 */
     ALL                 = 'All',
-    /** 强劲增长 */
+    /** 强力生长 */
     STRONG_GROW         = 'StrongGrow',
-    /** 动物 */
+    /** 动物亲和 */
     ANIMAL              = 'Animal',
-    /** 血 */
+    /** 橙意满满 */
     BLOOD               = 'Blood',
 }
 
@@ -54,11 +54,11 @@ export enum IEnumCombo {
     STRONG_GROW         = "StrongGrow",
     /** 血 */
     BLOOD               = "Blood",
-    /** B-过量 */
+    /** 超额回复 */
     B_EXCESS            = "B-Excess",
-    /** B-数字 */
+    /** 扣血数量 */
     B_NUM               = "B-Num",
-    /** B-时间 */
+    /** 扣血次数 */
     B_TIMES             = "B-Times",
     /** 动物 */
     ANIMALS             = "Animals",

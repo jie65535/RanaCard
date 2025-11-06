@@ -35,10 +35,33 @@ export async function encodeEncrypted(payload: any): Promise<string> {
   return data
 }
 
+// ---- Patch APIs ----
+export async function patchDiff(kind: 'card' | 'pendant' | 'mapevent' | 'begineffect' | 'disaster', edited: any): Promise<any> {
+  const { data } = await axios.post(`${API_BASE}/api/patch/diff`, edited, { params: { kind } })
+  return data
+}
+
+export async function patchApply(kind: 'card' | 'pendant' | 'mapevent' | 'begineffect' | 'disaster', patch: any, target?: any): Promise<{ ok: boolean; result: any; stats: any; conflicts: any[] }> {
+  const body: any = { patch }
+  if (typeof target !== 'undefined') body.target = target
+  const { data } = await axios.post(`${API_BASE}/api/patch/apply`, body, { params: { kind } })
+  return data
+}
+
 // ---- Share APIs ----
 export type ShareCreateResp = { id: string; url: string; manageToken: string }
 export async function shareCreate(meta: { title: string; author?: string; description?: string; baseDataVersion?: string }, data: { cards?: any; pendants?: any; mapEvents?: any; beginEffects?: any }): Promise<ShareCreateResp> {
   const { data: resp } = await axios.post(`${API_BASE}/api/share`, { meta, data })
+  return resp
+}
+
+export async function shareCreatePatch(meta: { title: string; author?: string; description?: string; baseDataVersion?: string }, patch: any): Promise<ShareCreateResp> {
+  const { data: resp } = await axios.post(`${API_BASE}/api/share`, { meta, patch })
+  return resp
+}
+
+export async function shareCreatePatches(meta: { title: string; author?: string; description?: string; baseDataVersion?: string }, patches: any[]): Promise<ShareCreateResp> {
+  const { data: resp } = await axios.post(`${API_BASE}/api/share`, { meta, patches })
   return resp
 }
 

@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { shareCreate, validate } from '../../api';
+import { shareCreatePatch, validate, patchDiff } from '../../api';
 import ErrorAlert from './ErrorAlert.vue';
 
 interface ShareDialogProps {
@@ -64,19 +64,26 @@ function clearErrors() {
 
 async function doShare() {
   if (!postData.value) return
-  // validate first
+  // 先校验用户当前数据的基本结构
   const res = await validate(props.type, postData.value)
   if (!res.ok) {
     errors.value = res.errors
     return
   }
   try {
-    const { id, url, manageToken } = await shareCreate({
-        title: shareTitle.value,
-        author: shareAuthor.value || undefined,
-        description: shareDescription.value || undefined
-    }, { [props.type]: postData.value })
-    // save token for self-manage
+    // 生成补丁，只分享改动
+    const diff = await patchDiff(props.type, postData.value)
+    const ch = (diff?.changes) || {}
+    const total = (ch.adds?.length || 0) + (ch.updates?.length || 0) + (ch.deletes?.length || 0)
+    if (!total) {
+      alert('未检测到任何改动，未发布。')
+      return
+    }
+    const { id, url, manageToken } = await shareCreatePatch({
+      title: shareTitle.value,
+      author: shareAuthor.value || undefined,
+      description: shareDescription.value || undefined
+    }, diff)
     const map = JSON.parse(localStorage.getItem('share.manageTokens') || '{}')
     map[id] = manageToken
     localStorage.setItem('share.manageTokens', JSON.stringify(map))

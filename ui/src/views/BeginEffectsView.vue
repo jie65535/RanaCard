@@ -54,7 +54,7 @@
         <el-form label-width="120px" class="form" v-if="editBuffer">
           <el-form-item label="ID"><el-input v-model="editBuffer.ID" /></el-form-item>
           <el-form-item label="描述"><el-input v-model="editBuffer.EffectDescription" type="textarea" :rows="2" /></el-form-item>
-          <el-form-item label="效果"><el-input v-model="editBuffer.EffectString" type="textarea" :rows="3" /></el-form-item>
+          <el-form-item label="效果"><EffectEditor v-model="editBuffer.EffectString" :kind="'begineffect'" /></el-form-item>
           <el-form-item label="解锁"><el-switch :active-value="1" :inactive-value="0" v-model="editBuffer.UnLocked" /></el-form-item>
           <el-form-item label="解锁条件"><el-input v-model="editBuffer.UnlockCondition" /></el-form-item>
           <el-form-item label="星数"><el-input-number v-model="editBuffer.StarCount" :min="0" :step="1" /></el-form-item>
@@ -77,6 +77,7 @@ import { useDataStore, type BeginEffect } from '../store/data'
 import { decodeEncrypted, encodeEncrypted, getData, validate } from '../api'
 import ShareDialog from '../components/common/ShareDialog.vue'
 import ErrorAlert from '../components/common/ErrorAlert.vue'
+import EffectEditor from '../components/effect/EffectEditor.vue'
 
 const store = useDataStore()
 const beginEffects = computed(() => store.beginEffects)
@@ -86,7 +87,7 @@ const unlockedFilter = ref<number | null>(null)
 const minStar = ref<number | null>(null)
 const maxStar = ref<number | null>(null)
 const width = ref<number>(typeof window !== 'undefined' ? window.innerWidth : 1200)
-const drawerSize = computed(() => (width.value >= 1200 ? '720px' : '90%'))
+const drawerSize = computed(() => (width.value >= 1200 ? '960px' : '95%'))
 
 const current = ref<BeginEffect | null>(null)
 const originalRef = ref<any>(null)

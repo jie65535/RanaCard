@@ -55,7 +55,10 @@
           <template v-for="key in pendantEditableOrder" :key="key">
             <template v-if="(editBuffer as any)[key] !== undefined">
               <el-form-item :label="fieldLabels[key] || key">
-                <el-input v-if="textFields.has(key) && !textAreaFields.has(key)" v-model="(editBuffer as any)[key]" />
+                <template v-if="key==='EffectString'">
+                  <EffectEditor v-model="(editBuffer as any)[key]" :kind="'pendant'" />
+                </template>
+                <el-input v-else-if="textFields.has(key) && !textAreaFields.has(key)" v-model="(editBuffer as any)[key]" />
                 <el-input v-else-if="textAreaFields.has(key)" type="textarea" :rows="3" v-model="(editBuffer as any)[key]" />
                 <el-input-number v-else-if="numberFields.has(key)" :min="0" v-model="(editBuffer as any)[key]" />
                 <el-switch v-else-if="switchFields.has(key)" :active-value="1" :inactive-value="0" v-model="(editBuffer as any)[key]" />
@@ -91,6 +94,7 @@ import CharacterSelect from '../components/edit/CharacterSelect.vue'
 import ComboSelect from '../components/edit/ComboSelect.vue'
 import ShareDialog from '../components/common/ShareDialog.vue'
 import ErrorAlert from '../components/common/ErrorAlert.vue'
+import EffectEditor from '../components/effect/EffectEditor.vue'
 
 const store = useDataStore()
 const pendants = computed(() => store.pendants)
@@ -101,7 +105,7 @@ const editBuffer = ref<any | null>(null)
 const originalRef = ref<any | null>(null)
 const jsonMode = ref(false)
 const width = ref<number>(typeof window !== 'undefined' ? window.innerWidth : 1200)
-const drawerSize = computed(() => width.value < 900 ? '100%' : '520px')
+const drawerSize = computed(() => (width.value >= 1200 ? '960px' : '90%'))
 const advancedText = ref('')
 const errors = ref<string[]>([])
 const selectedCharacter = ref<string | null>(null)

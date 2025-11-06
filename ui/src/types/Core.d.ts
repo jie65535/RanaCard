@@ -2,9 +2,9 @@ declare namespace Types {
 
     namespace Core {
 
-        type OptionItem<T> = {
+        type OptionItem<T = any> = {
             label: string;
-            value: any;
+            value: T;
             type?: 'primary' | 'success' | 'info' | 'warning' | 'danger';
             bgColor?: string;
             textColor?: string;

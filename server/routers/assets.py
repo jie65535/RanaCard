@@ -32,7 +32,9 @@ def get_baseline(kind: str) -> Dict[str, Any]:
         return _load_json(DATA_DIR / "MapEvent.json")
     if kind_l == "begineffect":
         return _load_json(DATA_DIR / "BeginEffect.json")
-    raise HTTPException(status_code=400, detail="kind must be 'card' or 'pendant' or 'mapevent' or 'begineffect'")
+    if kind_l == "disaster":
+        return _load_json(DATA_DIR / "Disaster.json")
+    raise HTTPException(status_code=400, detail="kind must be 'card' or 'pendant' or 'mapevent' or 'begineffect' or 'disaster'")
 
 
 @router.get("/data/{kind}")
